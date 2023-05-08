@@ -1,0 +1,37 @@
+#!/bin/bash
+if [ ! -d /etc/nginx/sites-available ]; then
+  mkdir /etc/nginx/sites-available
+fi
+if [ ! -d /etc/nginx/sites-enabled ]; then
+  mkdir /etc/nginx/sites-enabled
+fi
+
+avail=/etc/nginx/sites-available/$1
+enabled=/etc/nginx/sites-enabled
+site=`ls /etc/nginx/sites-enabled/`
+
+if [ "$#" != "1" ]; then
+  echo "Use script: nginx_dissite virtual_site"
+  echo -e "\nAvailable virtual hosts: \n$site"
+  exit 0
+else
+  if test -e "$avail" && ! test -e "$enabled/$1"; then
+    echo "Site $1 already disabled"
+  else
+    if test -e $enabled/$1; then
+      sudo rm  $enabled/$1
+    else
+      echo -e "$avail virtual host does not exist! Exiting!"
+      exit 0
+    fi
+    
+    if test -e $enabled/$1; then
+      echo "Error!! Could not remove $avail virtual host!"
+    else
+      echo "Site $1 disabled."
+      echo "  To activate the new configuration, you need to run:"
+      echo "    systemctl restart nginx"
+      exit 0
+    fi
+  fi
+fi

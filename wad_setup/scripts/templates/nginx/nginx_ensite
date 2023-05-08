@@ -1,0 +1,53 @@
+#!/bin/bash
+# a2ensite api_wadqc: 
+#   Site api_wadqc already enabled
+# a2dissite api_wadqc: 
+#  Site api_wadqc disabled.
+#  To activate the new configuration, you need to run:
+#    service apache2 reload
+# a2dissite api_wadqc: 
+#  Site api_wadqc already disabled
+# a2ensite api_wadqc: 
+#  Enabling site api_wadqc.
+#  To activate the new configuration, you need to run:
+#    service apache2 reload
+# a2query -s api_wadqc
+#  api_wadqc (enabled by site administrator)
+# a2query -s api_wadqc
+#  No site matches api_wadqc (disabled by site administrator)
+if [ ! -d /etc/nginx/sites-available ]; then
+  mkdir /etc/nginx/sites-available
+fi
+if [ ! -d /etc/nginx/sites-enabled ]; then
+  mkdir /etc/nginx/sites-enabled
+fi
+
+avail=/etc/nginx/sites-available/$1
+enabled=/etc/nginx/sites-enabled/
+site=`ls /etc/nginx/sites-available/`
+
+if [ "$#" != "1" ]; then
+  echo "Use script: nginx_ensite virtual_site"
+  echo -e "\nAvailable virtual hosts:\n$site"
+  exit 0
+else
+  if test -e $enabled/$1; then
+    echo "Site $1 already enabled"
+  else
+    if test -e $avail; then
+      sudo ln -s $avail $enabled
+    else
+      echo -e "$avail virtual host does not exist! Please create one!\n$site"
+      exit 0
+    fi
+  
+    if test -e $enabled/$1; then
+      echo "Enabling site $1."
+      echo "  To activate the new configuration, you need to run:"
+      echo "    systemctl restart nginx"
+    else
+      echo  -e "Virtual host $avail does not exist!\nPlease see available virtual hosts:\n$site"
+      exit 0
+    fi
+  fi
+fi

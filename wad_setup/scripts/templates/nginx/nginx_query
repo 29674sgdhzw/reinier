@@ -1,0 +1,28 @@
+#!/bin/bash
+if [ ! -d /etc/nginx/sites-available ]; then
+  mkdir /etc/nginx/sites-available
+fi
+if [ ! -d /etc/nginx/sites-enabled ]; then
+  mkdir /etc/nginx/sites-enabled
+fi
+
+site=`ls /etc/nginx/sites-available/`
+
+if [ "$#" != "2" ]; then
+  echo "Use script: nginx_query -s virtual_site"
+  echo -e "\nAvailable virtual hosts:\n$site"
+  exit 0
+else
+  avail=/etc/nginx/sites-available/$2
+  enabled=/etc/nginx/sites-enabled/$2
+  if [ ! -e "$avail" ]; then
+   echo -e "$avail virtual host does not exist! Please create one!\n$site"
+   exit 0
+  fi
+  
+  if test -e $enabled; then
+    echo "$2 (enabled by site administrator)"
+  else
+    echo "No site matches $2 (disabled by site administrator)"
+  fi
+fi

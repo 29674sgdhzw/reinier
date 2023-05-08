@@ -1,0 +1,67 @@
+{ // comments in this json file are allowed
+    "global_params": { // these parameters will be available for all actions
+        "installation_root": "~/WADDEV", // Use a ~ for the executing user's home folder
+        "pgsql_port": 5432, // Port for PostgreSQL server
+        "rest_port": 8042,  // Port for REST access to Orthanc
+        "pacs_port": 11112, // Port for PACS node
+        "virtualenv": "~/Envs/wad2env3/bin" // Leave empty or give the path to bin folder of the virtualenv to use e.g. ~/Envs/wad2env3/bin
+    },
+    "actions": [ // must be a list to fix order of execution
+        { // 01. prerequisites: python-dev, curl, postgresql lib (package names are adjusted automatically when running python3)
+            "cmd": "apt_install",
+            "kwargs": {"pkgs": ["gcc", "libpq5", "python-dev", "curl", "libpq-dev", "lua-socket", "libtinfo5", "python-testresources"] } 
+        },
+        { // 02. prerequisites for modules: tesseract-ocr
+            "cmd": "apt_install",
+            "kwargs": {"pkgs": ["tesseract-ocr", "tesseract-ocr-eng"] } 
+        },
+        { // 03. prepare for installation: folders, scripts, settings; do this before from-bigsql and from-dropbox installations
+            "cmd": "create_folders_settings",
+            "kwargs": {
+                "orthanc_pass": "waddemo",  // Password for user access to Orthanc
+                "iqcdb_pass":"waddemo",     // Password for owner of WAD-QC DB
+                "orthancdb_pass": "waddemo" // Password for owner of Orthanc DB
+            }
+        },
+        { // 04a. install postgresql option a: from bigsql
+            "cmd": "postgresql_install",
+            "kwargs": {"source": "bigsql11" } // installation script from bigsql needs python2 with urllib2 and tarfile; only for 64 bit. Valid: bigsql11, # retired: bigsql, bigsql95, bigsql10
+        },
+        { // 05a. install orthanc option a: precompiled with postgresql from dropbox (needs requests and tarfile)
+            "cmd": "orthanc_install",
+            "kwargs": {"source": "dropbox_Lin64_Ubuntu1804" }
+        },
+        { // 10. install wad: pip install --upgrade wad_qc
+            "cmd": "pip_install",
+            "kwargs": {"pkglist": ["dist/wad_qc-latest-py2.py3-none-any.whl"] } 
+        },
+        { // 11. databases: create root database for PostgreSQL
+            "cmd": "create_postgresql_datadir",
+            "kwargs": {} 
+        },
+        { // 13. databases: create databases for WAD-QC and for Orthanc
+            "cmd": "create_databases",
+            "kwargs": {} 
+        },
+        { // 14. databases: initialize databases
+            "cmd": "initialize_wadqc",
+            "kwargs": {} 
+        },
+        { // 20. python dependencies for general modules (also included in step 29): numpy scipy pillow matplotlib selectors34
+            "cmd": "pip_install",
+            "kwargs": {"pkglist": ["numpy", "scipy", "pillow", "matplotlib", "selectors34"] } 
+        },
+        { // 21. python dependencies for OCR (also included in step 29): pyocr
+            "cmd": "pip_install",
+            "kwargs": {"pkglist": ["pyocr"] }
+        },
+        { // 29. force install the tested versions of python packages, including most dependencies for modules. wad_qc can still require other packages.
+            "cmd": "pip_install_requirements",
+            "kwargs": {}
+        },
+        { // 90. exit wad_setup and restart wadservices
+            "cmd": "wadservices",
+            "kwargs": {"command": "restart", "services": "all"}
+        }        
+    ]
+}

@@ -1,0 +1,19 @@
+{ // comments in this json file are allowed
+    "global_params": { // these parameters will be available for all actions
+        "virtualenv": "~/Envs/wad2env3/bin" // Leave empty or give the path to bin folder of the virtualenv to use e.g. ~/Envs/wad2env3/bin
+    },
+    "actions": [ // must be a list to fix order of execution
+        { // 10. install wad: pip install --upgrade wad_qc
+            "cmd": "pip_install",
+            "kwargs": {"pkglist": ["dist/wad_qc-latest-py2.py3-none-any.whl"] } 
+        },
+        { // 29. force install the tested versions of python packages, including most dependencies for modules. wad_qc can still require other packages.
+            "cmd": "pip_install_requirements",
+            "kwargs": {}
+        },
+        { // 90. exit wad_setup and upgrade dbwadqc and restart wadservices
+            "cmd": "dbupgrade",
+            "kwargs": {}
+        }        
+    ]
+}

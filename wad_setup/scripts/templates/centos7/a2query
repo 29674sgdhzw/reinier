@@ -1,0 +1,28 @@
+#!/bin/bash
+if [ ! -d /etc/httpd/sites-available ]; then
+  mkdir /etc/httpd/sites-available
+fi
+if [ ! -d /etc/httpd/sites-enabled ]; then
+  mkdir /etc/httpd/sites-enabled
+fi
+
+site=`ls /etc/httpd/sites-available/`
+
+if [ "$#" != "2" ]; then
+  echo "Use script: a2query -s virtual_site"
+  echo -e "\nAvailable virtual hosts:\n$site"
+  exit 0
+else
+  avail=/etc/httpd/sites-available/$2.conf
+  enabled=/etc/httpd/sites-enabled/$2.conf
+  if [ ! -e "$avail" ]; then
+   echo -e "$avail virtual host does not exist! Please create one!\n$site"
+   exit 0
+  fi
+  
+  if test -e $enabled; then
+    echo "$2 (enabled by site administrator)"
+  else
+    echo "No site matches $2 (disabled by site administrator)"
+  fi
+fi

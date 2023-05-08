@@ -1,0 +1,10 @@
+server {
+    listen __PORT__;
+    server_name admin.wadqc;
+
+    location / {
+        include uwsgi_params;
+        uwsgi_read_timeout 3000;
+        uwsgi_pass unix:__SOCKETDIR__/admin_wadqc.sock;
+    }
+}

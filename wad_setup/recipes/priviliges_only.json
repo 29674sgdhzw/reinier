@@ -1,0 +1,11 @@
+{ // comments in this json file are allowed
+    "global_params": { // these parameters will be available for all actions
+        "virtualenv": "~/Envs/wad2env3/bin" // Leave empty or give the path to bin folder of the virtualenv to use e.g. ~/Envs/wad2env3/bin
+    },
+    "actions": [ // must be a list to fix order of execution
+        { // 90. exit wad_setup and upgrade dbwadqc and restart wadservices
+            "cmd": "restrict_privileges",
+            "kwargs": {}
+        }        
+    ]
+}

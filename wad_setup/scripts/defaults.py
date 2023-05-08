@@ -1,0 +1,1 @@
+LOGGERNAME = 'wad_setup'

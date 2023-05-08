@@ -1,0 +1,100 @@
+{ // comments in this json file are allowed
+    "global_params": { // these parameters will be available for all actions
+        "installation_root": "~/WADROOT", // Use a ~ for the executing user's home folder
+        "pgsql_port": 5432, // Port for PostgreSQL server
+        "rest_port": 8042,  // Port for REST access to Orthanc
+        "pacs_port": 11112, // Port for PACS node
+        "virtualenv": "~/Envs/wad2env3/bin" // Leave empty or give the path to bin folder of the virtualenv to use e.g. ~/Envs/wad2env3/bin
+    },
+    "actions": [ // must be a list to fix order of execution
+        { // 01. prerequisites: python-dev, curl, postgresql lib (package names are adjusted automatically when running python3)
+            "cmd": "apt_install",
+            "kwargs": {"pkgs": ["gcc", "libpq5", "python-dev", "curl", "libpq-dev", "lua-socket"] } 
+        },
+        { // 02. prerequisites for modules: tesseract-ocr
+            "cmd": "apt_install",
+            "kwargs": {"pkgs": ["tesseract-ocr", "tesseract-ocr-eng"] } 
+        },
+        { // 02. overwrite systemd: only use this in docker or Windows10 with WSL!
+            "cmd": "replace_systemd",
+            "kwargs": {} 
+        },
+        { // 03. prepare for installation: folders, scripts, settings; do this before from-bigsql and from-dropbox installations
+            "cmd": "create_folders_settings",
+            "kwargs": {
+                "orthanc_pass": "waddemo",  // Password for user access to Orthanc
+                "iqcdb_pass":"waddemo",     // Password for owner of WAD-QC DB
+                "orthancdb_pass": "waddemo", // Password for owner of Orthanc DB
+                "orthancplugins_root": "/usr/share" // Orthanc plugins are in /usr/share/orthanc/plugins
+            }
+        },
+        { // 04b. install postgresql option b: from repository and disable systemd service
+            "cmd": "postgresql_install",
+            "kwargs": {"source": "apt_systemd" } 
+        },
+        { // 05b. install orthanc option b: from apt repositories and disable systemd service; if orthanc-postgresql is available it will be installed
+            "cmd": "orthanc_install",
+            "kwargs": {"source": "apt_systemd" } 
+        },
+        { // 10. install wad: pip install --upgrade wad_qc
+            "cmd": "pip_install",
+            "kwargs": {"pkglist": ["dist/wad_qc-latest-py2.py3-none-any.whl"] } 
+        },
+        { // 11. databases: create root database for PostgreSQL
+            "cmd": "create_postgresql_datadir",
+            "kwargs": {} 
+        },
+        { // 12. systemd: PostgreSQL 
+            "cmd": "create_start_systemd",
+            "kwargs": {"service": "wadpostgresql"} // postgresql service, will run as current user
+        },
+        { // 13. databases: create databases for WAD-QC and for Orthanc
+            "cmd": "create_databases",
+            "kwargs": {} 
+        },
+        { // 14. databases: initialize databases
+            "cmd": "initialize_wadqc",
+            "kwargs": {} 
+        },
+        { // 20. python dependencies for general modules (also included in step 29): numpy scipy pillow matplotlib selectors34
+            "cmd": "pip_install",
+            "kwargs": {"pkglist": ["numpy", "scipy", "pillow", "matplotlib", "selectors34"] } 
+        },
+        { // 21. python dependencies for OCR (also included in step 29): pyocr
+            "cmd": "pip_install",
+            "kwargs": {"pkglist": ["pyocr"] } 
+        },
+        { // 29. force install the tested versions of python packages, including most dependencies for modules. wad_qc can still require other packages.
+            "cmd": "pip_install_requirements",
+            "kwargs": {}
+        },
+        { // 30. nginx: enable
+            "cmd": "enable_nginx",
+            "kwargs": {"mode": "systemd"} // only systemd implemented right now 
+        },
+        { // 31. nginx: deploy sites
+            "cmd": "nginx_deploy_sites",
+            "kwargs": {
+                "sitelist": ["wad_admin", "wad_dashboard", "wad_api"], // sites will run as current user
+                "portlist": [12001, 80, 3000]
+            }
+        },
+        { // 40. systemd: wadprocessor
+            "cmd": "create_start_systemd",
+            "kwargs": {"service": "wadprocessor" } // wadprocessor service, will run as current user
+        },
+        { // 41. systemd: Orthanc
+            "cmd": "create_start_systemd",
+            "kwargs": {"service": "wadorthanc"} // orthanc service, will run as current user
+        },
+        { // 50. fix waduser permissions and time-out settings (Ubuntu, CentOS7, not-development installation)
+          //   see troubleshooting section on the wiki
+            "cmd": "platform_fixes", 
+            "kwargs": {"fixes": ["removeipc", "enable-linger", "nginxtimeout"] } 
+        },
+        { // 90. exit wad_setup and restart wadservices
+            "cmd": "wadservices",
+            "kwargs": {"command": "restart", "services": "all"}
+        }        
+    ]
+}

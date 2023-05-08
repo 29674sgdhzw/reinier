@@ -1,0 +1,37 @@
+#!/bin/bash
+if [ ! -d /etc/httpd/sites-available ]; then
+  mkdir /etc/httpd/sites-available
+fi
+if [ ! -d /etc/httpd/sites-enabled ]; then
+  mkdir /etc/httpd/sites-enabled
+fi
+
+avail=/etc/httpd/sites-available/$1.conf
+enabled=/etc/httpd/sites-enabled
+site=`ls /etc/httpd/sites-enabled/`
+
+if [ "$#" != "1" ]; then
+  echo "Use script: a2dissite virtual_site"
+  echo -e "\nAvailable virtual hosts: \n$site"
+  exit 0
+else
+  if [ test -e $avail && ! test -e $enabled/$1.conf ]; then
+    echo "Site $1 already disabled"
+  else
+    if test -e $enabled/$1.conf; then
+      sudo rm  $enabled/$1.conf
+    else
+      echo -e "$avail virtual host does not exist! Exiting!"
+      exit 0
+    fi
+    
+    if test -e $enabled/$1.conf; then
+      echo "Error!! Could not remove $avail virtual host!"
+    else
+      echo "Site $1 disabled."
+      echo "  To activate the new configuration, you need to run:"
+      echo "    systemctl restart httpd"
+      exit 0
+    fi
+  fi
+fi
